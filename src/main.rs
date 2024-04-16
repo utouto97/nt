@@ -101,13 +101,28 @@ impl App {
             .join(format!("{}.md", file.id));
         Ok(filename.to_str().unwrap().to_string())
     }
+
+    fn init(&self) -> anyhow::Result<()> {
+        let nt_dir = std::path::Path::new(self.config.nt_dir.as_str());
+        if !nt_dir.exists() {
+            let metadata = FileList {
+                files: vec![],
+                current_serial_number: 1,
+            };
+            let json = serde_json::to_string(&metadata)?;
+            std::fs::create_dir_all(nt_dir.join("notes"))?;
+            std::fs::write(nt_dir.join("filelist.json"), json)?;
+        }
+        Ok(())
+    }
 }
 
 fn main() {
     let cli = Cli::parse();
     let app = App::new(Config {
-        nt_dir: String::from("./nt"),
+        nt_dir: String::from("~/nt"),
     });
+    app.init().unwrap();
     match cli.command {
         Commands::New { title } => {
             let id = generate_id();
