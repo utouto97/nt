@@ -113,8 +113,6 @@ fn main() {
             let id = generate_id();
             println!("Creating new note with id: {}, title: {}", id, title);
             app.new_note(&id, &title).unwrap();
-            let metadata = app.get_filelist().unwrap();
-            println!("Metadata: {:?}", metadata);
         }
         Commands::List => {
             let metadata = app.get_filelist().unwrap();
