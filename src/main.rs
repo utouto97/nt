@@ -12,6 +12,8 @@ struct Cli {
 enum Commands {
     #[command(about = "new note")]
     New(NewArgs),
+    #[command(about = "list notes")]
+    List,
 }
 
 #[derive(Debug, Args)]
@@ -91,6 +93,12 @@ fn main() {
             app.new_note(&id, &args.title).unwrap();
             let metadata = app.get_filelist().unwrap();
             println!("Metadata: {:?}", metadata);
+        }
+        Commands::List => {
+            let metadata = app.get_filelist().unwrap();
+            metadata.files.iter().for_each(|file| {
+                println!("{}: {}", file.id, file.title);
+            });
         }
     }
 }
