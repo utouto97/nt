@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +11,10 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     #[command(about = "new note")]
-    New(NewArgs),
+    New {
+        #[arg(help = "note title")]
+        title: String,
+    },
     #[command(about = "list notes")]
     List,
     #[command(about = "edit note")]
@@ -19,12 +22,6 @@ enum Commands {
         #[arg(help = "note id")]
         id: u32,
     },
-}
-
-#[derive(Debug, Args)]
-struct NewArgs {
-    #[arg(help = "note title")]
-    title: String,
 }
 
 struct Config {
@@ -112,10 +109,10 @@ fn main() {
         nt_dir: String::from("./nt"),
     });
     match cli.command {
-        Commands::New(args) => {
+        Commands::New { title } => {
             let id = generate_id();
-            println!("Creating new note with id: {}, title: {}", id, args.title);
-            app.new_note(&id, &args.title).unwrap();
+            println!("Creating new note with id: {}, title: {}", id, title);
+            app.new_note(&id, &title).unwrap();
             let metadata = app.get_filelist().unwrap();
             println!("Metadata: {:?}", metadata);
         }
