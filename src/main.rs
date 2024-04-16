@@ -14,6 +14,11 @@ enum Commands {
     New(NewArgs),
     #[command(about = "list notes")]
     List,
+    #[command(about = "edit note")]
+    Edit {
+        #[arg(help = "note id")]
+        id: u32,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -86,6 +91,19 @@ impl App {
         std::fs::write(&filename, serde_json::to_string(&metadata)?)?;
         Ok(())
     }
+
+    fn get_file(&self, serial_number: u32) -> anyhow::Result<String> {
+        let metadata = self.get_filelist()?;
+        let file = metadata
+            .files
+            .iter()
+            .find(|file| file.serial_number == serial_number)
+            .unwrap();
+        let filename = std::path::Path::new(self.config.nt_dir.as_str())
+            .join("notes")
+            .join(format!("{}.md", file.id));
+        Ok(filename.to_str().unwrap().to_string())
+    }
 }
 
 fn main() {
@@ -106,6 +124,14 @@ fn main() {
             metadata.files.iter().for_each(|file| {
                 println!("{}: {}, {}", file.serial_number, file.title, file.id);
             });
+        }
+        Commands::Edit { id } => {
+            let filename = app.get_file(id).unwrap();
+            println!("Editing note with id: {} {}", id, filename);
+            std::process::Command::new("nvim")
+                .arg(filename)
+                .status()
+                .unwrap();
         }
     }
 }
