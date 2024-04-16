@@ -29,8 +29,14 @@ struct App {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Metadata {
-    files: Vec<String>,
+struct FileList {
+    files: Vec<FileMetadata>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct FileMetadata {
+    id: String,
+    title: String,
 }
 
 fn generate_id() -> String {
@@ -48,16 +54,28 @@ impl App {
             .join("notes")
             .join(format!("{}.md", id));
         std::fs::write(&filename, title)?;
+        self.add_file(id, title)?;
         Ok(())
     }
 
-    fn get_metadata(&self) -> anyhow::Result<Metadata> {
-        let filename = std::path::Path::new(self.config.nt_dir.as_str()).join("metadata.json");
+    fn get_filelist(&self) -> anyhow::Result<FileList> {
+        let filename = std::path::Path::new(self.config.nt_dir.as_str()).join("filelist.json");
         let metadata = match std::fs::read_to_string(&filename) {
             Ok(metadata) => serde_json::from_str(&metadata)?,
-            Err(_) => Metadata { files: vec![] },
+            Err(_) => FileList { files: vec![] },
         };
         Ok(metadata)
+    }
+
+    fn add_file(&self, id: &str, title: &str) -> anyhow::Result<()> {
+        let mut metadata = self.get_filelist()?;
+        metadata.files.push(FileMetadata {
+            id: String::from(id),
+            title: String::from(title),
+        });
+        let filename = std::path::Path::new(self.config.nt_dir.as_str()).join("filelist.json");
+        std::fs::write(&filename, serde_json::to_string(&metadata)?)?;
+        Ok(())
     }
 }
 
@@ -71,7 +89,7 @@ fn main() {
             let id = generate_id();
             println!("Creating new note with id: {}, title: {}", id, args.title);
             app.new_note(&id, &args.title).unwrap();
-            let metadata = app.get_metadata().unwrap();
+            let metadata = app.get_filelist().unwrap();
             println!("Metadata: {:?}", metadata);
         }
     }
