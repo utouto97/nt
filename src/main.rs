@@ -33,10 +33,12 @@ struct App {
 #[derive(Debug, Serialize, Deserialize)]
 struct FileList {
     files: Vec<FileMetadata>,
+    current_serial_number: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct FileMetadata {
+    serial_number: u32,
     id: String,
     title: String,
 }
@@ -64,7 +66,10 @@ impl App {
         let filename = std::path::Path::new(self.config.nt_dir.as_str()).join("filelist.json");
         let metadata = match std::fs::read_to_string(&filename) {
             Ok(metadata) => serde_json::from_str(&metadata)?,
-            Err(_) => FileList { files: vec![] },
+            Err(_) => FileList {
+                files: vec![],
+                current_serial_number: 0,
+            },
         };
         Ok(metadata)
     }
@@ -72,9 +77,11 @@ impl App {
     fn add_file(&self, id: &str, title: &str) -> anyhow::Result<()> {
         let mut metadata = self.get_filelist()?;
         metadata.files.push(FileMetadata {
+            serial_number: metadata.current_serial_number,
             id: String::from(id),
             title: String::from(title),
         });
+        metadata.current_serial_number += 1;
         let filename = std::path::Path::new(self.config.nt_dir.as_str()).join("filelist.json");
         std::fs::write(&filename, serde_json::to_string(&metadata)?)?;
         Ok(())
@@ -97,7 +104,7 @@ fn main() {
         Commands::List => {
             let metadata = app.get_filelist().unwrap();
             metadata.files.iter().for_each(|file| {
-                println!("{}: {}", file.id, file.title);
+                println!("{}: {}, {}", file.serial_number, file.title, file.id);
             });
         }
     }
