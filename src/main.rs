@@ -20,7 +20,7 @@ struct NewArgs {
 }
 
 struct Config {
-    notes_dir: String,
+    nt_dir: String,
 }
 
 struct App {
@@ -38,8 +38,9 @@ impl App {
     }
 
     fn new_note(&self, id: &str, title: &str) -> anyhow::Result<()> {
-        let filename =
-            std::path::Path::new(self.config.notes_dir.as_str()).join(format!("{}.md", id));
+        let filename = std::path::Path::new(self.config.nt_dir.as_str())
+            .join("notes")
+            .join(format!("{}.md", id));
         std::fs::write(&filename, title)?;
         Ok(())
     }
@@ -48,7 +49,7 @@ impl App {
 fn main() {
     let cli = Cli::parse();
     let app = App::new(Config {
-        notes_dir: String::from("./notes"),
+        nt_dir: String::from("./nt"),
     });
     match cli.command {
         Commands::New(args) => {
