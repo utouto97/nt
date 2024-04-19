@@ -2,6 +2,9 @@ use clap::{Parser, Subcommand};
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 
+mod config;
+use config::Config;
+
 #[derive(Debug, Parser)]
 struct Cli {
     #[command(subcommand)]
@@ -22,10 +25,6 @@ enum Commands {
         #[arg(help = "note id")]
         id: u32,
     },
-}
-
-struct Config {
-    nt_dir: String,
 }
 
 struct App {
@@ -119,8 +118,10 @@ impl App {
 
 fn main() {
     let cli = Cli::parse();
+    let home_dir = dirs::home_dir().unwrap();
+    let dir = home_dir.join("nt");
     let app = App::new(Config {
-        nt_dir: String::from("~/nt"),
+        nt_dir: dir.to_str().unwrap().to_string(),
     });
     app.init().unwrap();
     match cli.command {
