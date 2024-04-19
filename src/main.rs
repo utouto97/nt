@@ -1,8 +1,9 @@
 use clap::{Parser, Subcommand};
 use rand::distributions::{Alphanumeric, DistString};
-use serde::{Deserialize, Serialize};
 
+mod app;
 mod config;
+use app::App;
 use config::Config;
 
 #[derive(Debug, Parser)]
@@ -27,102 +28,16 @@ enum Commands {
     },
 }
 
-struct App {
-    config: Config,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct FileList {
-    files: Vec<FileMetadata>,
-    current_serial_number: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct FileMetadata {
-    serial_number: u32,
-    id: String,
-    title: String,
-}
-
 fn generate_id() -> String {
     let mut rng = rand::thread_rng();
     Alphanumeric.sample_string(&mut rng, 32)
-}
-
-impl App {
-    fn new(config: Config) -> Self {
-        App { config }
-    }
-
-    fn new_note(&self, id: &str, title: &str) -> anyhow::Result<()> {
-        let filename = std::path::Path::new(self.config.nt_dir.as_str())
-            .join("notes")
-            .join(format!("{}.md", id));
-        std::fs::write(&filename, title)?;
-        self.add_file(id, title)?;
-        Ok(())
-    }
-
-    fn get_filelist(&self) -> anyhow::Result<FileList> {
-        let filename = std::path::Path::new(self.config.nt_dir.as_str()).join("filelist.json");
-        let metadata = match std::fs::read_to_string(&filename) {
-            Ok(metadata) => serde_json::from_str(&metadata)?,
-            Err(_) => FileList {
-                files: vec![],
-                current_serial_number: 0,
-            },
-        };
-        Ok(metadata)
-    }
-
-    fn add_file(&self, id: &str, title: &str) -> anyhow::Result<()> {
-        let mut metadata = self.get_filelist()?;
-        metadata.files.push(FileMetadata {
-            serial_number: metadata.current_serial_number,
-            id: String::from(id),
-            title: String::from(title),
-        });
-        metadata.current_serial_number += 1;
-        let filename = std::path::Path::new(self.config.nt_dir.as_str()).join("filelist.json");
-        std::fs::write(&filename, serde_json::to_string(&metadata)?)?;
-        Ok(())
-    }
-
-    fn get_file(&self, serial_number: u32) -> anyhow::Result<String> {
-        let metadata = self.get_filelist()?;
-        let file = metadata
-            .files
-            .iter()
-            .find(|file| file.serial_number == serial_number)
-            .unwrap();
-        let filename = std::path::Path::new(self.config.nt_dir.as_str())
-            .join("notes")
-            .join(format!("{}.md", file.id));
-        Ok(filename.to_str().unwrap().to_string())
-    }
-
-    fn init(&self) -> anyhow::Result<()> {
-        let nt_dir = std::path::Path::new(self.config.nt_dir.as_str());
-        if !nt_dir.exists() {
-            let metadata = FileList {
-                files: vec![],
-                current_serial_number: 1,
-            };
-            let json = serde_json::to_string(&metadata)?;
-            std::fs::create_dir_all(nt_dir.join("notes"))?;
-            std::fs::write(nt_dir.join("filelist.json"), json)?;
-        }
-        Ok(())
-    }
 }
 
 fn main() {
     let cli = Cli::parse();
     let home_dir = dirs::home_dir().unwrap();
     let dir = home_dir.join("nt");
-    let app = App::new(Config {
-        nt_dir: dir.to_str().unwrap().to_string(),
-    });
+    let app = App::new(Config::new(dir.to_str().unwrap()));
     app.init().unwrap();
     match cli.command {
         Commands::New { title } => {
