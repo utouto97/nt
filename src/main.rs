@@ -1,10 +1,8 @@
 use clap::{Parser, Subcommand};
-use rand::distributions::{Alphanumeric, DistString};
 
 mod app;
 mod config;
 use app::App;
-use config::Config;
 
 #[derive(Debug, Parser)]
 struct Cli {
@@ -24,39 +22,26 @@ enum Commands {
     #[command(about = "edit note")]
     Edit {
         #[arg(help = "note id")]
-        id: u32,
+        id: usize,
     },
-}
-
-fn generate_id() -> String {
-    let mut rng = rand::thread_rng();
-    Alphanumeric.sample_string(&mut rng, 32)
 }
 
 fn main() {
     let cli = Cli::parse();
-    let config = Config::load().unwrap();
-    let app = App::new(config);
-    app.init().unwrap();
+    let app = App::new().unwrap();
     match cli.command {
         Commands::New { title } => {
-            let id = generate_id();
-            println!("Creating new note with id: {}, title: {}", id, title);
-            app.new_note(&id, &title).unwrap();
+            let _ = app.add_note(&title).unwrap();
         }
         Commands::List => {
-            let metadata = app.get_filelist().unwrap();
-            metadata.files.iter().for_each(|file| {
-                println!("{}: {}, {}", file.serial_number, file.title, file.id);
-            });
+            let notes = app.list_notes().unwrap();
+            println!("  id: title");
+            notes
+                .iter()
+                .for_each(|note| println!("{:4}: {}", note.id, note.title))
         }
         Commands::Edit { id } => {
-            let filename = app.get_file(id).unwrap();
-            println!("Editing note with id: {} {}", id, filename);
-            std::process::Command::new("nvim")
-                .arg(filename)
-                .status()
-                .unwrap();
+            let _ = app.edit_note(id);
         }
     }
 }
