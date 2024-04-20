@@ -20,6 +20,7 @@ impl App {
             id,
             title: title.to_string(),
             path: format!("{}.md", id),
+            archived: false,
         };
         state.next_id += 1;
         state.notes.push(note.clone());
@@ -32,9 +33,17 @@ impl App {
         Ok(note)
     }
 
-    pub fn list_notes(&self) -> anyhow::Result<Vec<Note>> {
+    pub fn list_notes(&self, archived: bool) -> anyhow::Result<Vec<Note>> {
         let state = State::load(self.config.nt_dir().as_str());
-        let notes = state.notes;
+        let notes = if archived {
+            state.notes
+        } else {
+            state
+                .notes
+                .into_iter()
+                .filter(|note| !note.archived)
+                .collect()
+        };
         Ok(notes)
     }
 
@@ -51,6 +60,18 @@ impl App {
         std::process::Command::new("nvim").arg(filepath).status()?;
         Ok(())
     }
+
+    pub fn archive_note(&self, id: usize) -> anyhow::Result<()> {
+        let mut state = State::load(self.config.nt_dir().as_str());
+        state
+            .notes
+            .iter_mut()
+            .find(|note| note.id == id)
+            .map(|note| note.archived = true)
+            .ok_or(anyhow!("note not found"))?;
+        state.save(self.config.nt_dir().as_str())?;
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -65,6 +86,8 @@ pub struct Note {
     pub id: usize,
     pub path: String,
     pub title: String,
+    #[serde(default)]
+    pub archived: bool,
 }
 
 impl State {

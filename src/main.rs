@@ -18,9 +18,17 @@ enum Commands {
         title: String,
     },
     #[command(about = "list notes")]
-    List,
+    List {
+        #[arg(short, long, help = "Include archived notes")]
+        archived: bool,
+    },
     #[command(about = "edit note")]
     Edit {
+        #[arg(help = "note id")]
+        id: usize,
+    },
+    #[command(about = "archive note")]
+    Archive {
         #[arg(help = "note id")]
         id: usize,
     },
@@ -31,17 +39,25 @@ fn main() {
     let app = App::new().unwrap();
     match cli.command {
         Commands::New { title } => {
-            let _ = app.add_note(&title).unwrap();
+            app.add_note(&title).unwrap();
         }
-        Commands::List => {
-            let notes = app.list_notes().unwrap();
-            println!("  id: title");
-            notes
-                .iter()
-                .for_each(|note| println!("{:4}: {}", note.id, note.title))
+        Commands::List { archived } => {
+            let notes = app.list_notes(archived).unwrap();
+            println!("archived   id: title");
+            notes.iter().for_each(|note| {
+                println!(
+                    "{:>8} {:4}: {}",
+                    if note.archived { "o" } else { "" },
+                    note.id,
+                    note.title
+                )
+            })
         }
         Commands::Edit { id } => {
-            let _ = app.edit_note(id);
+            app.edit_note(id).unwrap();
+        }
+        Commands::Archive { id } => {
+            app.archive_note(id).unwrap();
         }
     }
 }
