@@ -1,11 +1,44 @@
+use derive_getters::Getters;
+use serde::{Deserialize, Serialize};
+use shellexpand;
+
+#[derive(Debug, Serialize, Deserialize, Getters)]
+#[serde(default)]
 pub struct Config {
-    pub nt_dir: String,
+    #[getter(skip)]
+    nt_dir: String,
 }
 
+const NT_CONFIG: &str = "~/.nt.json";
+
 impl Config {
-    pub fn new(nt_dir: &str) -> Self {
+    pub fn nt_dir(&self) -> String {
+        format!("{}", shellexpand::tilde(self.nt_dir.as_str()))
+    }
+
+    pub fn load() -> anyhow::Result<Self> {
+        let config_path = format!("{}", shellexpand::tilde(NT_CONFIG));
+        let config = match std::fs::read_to_string(&config_path) {
+            Ok(content) => {
+                let config: Config = serde_json::from_str(&content)?;
+                Ok(config)
+            }
+            Err(e) => {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    Ok(Config::default())
+                } else {
+                    Err(e)
+                }
+            }
+        }?;
+        Ok(config)
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
         Self {
-            nt_dir: nt_dir.to_string(),
+            nt_dir: "~/nt".to_string(),
         }
     }
 }

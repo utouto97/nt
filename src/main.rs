@@ -35,9 +35,8 @@ fn generate_id() -> String {
 
 fn main() {
     let cli = Cli::parse();
-    let home_dir = dirs::home_dir().unwrap();
-    let dir = home_dir.join("nt");
-    let app = App::new(Config::new(dir.to_str().unwrap()));
+    let config = Config::load().unwrap();
+    let app = App::new(config);
     app.init().unwrap();
     match cli.command {
         Commands::New { title } => {
