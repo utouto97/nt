@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use typed_builder::TypedBuilder;
@@ -71,12 +73,12 @@ impl App {
                 for filter in filters.iter() {
                     match filter {
                         Filter::Is(label) => {
-                            if !note.labels.iter().any(|l| l.as_str() == *label) {
+                            if !note.labels.contains(*label) {
                                 ok = false
                             }
                         }
                         Filter::Not(label) => {
-                            if !note.labels.iter().all(|l| l.as_str() != *label) {
+                            if note.labels.contains(*label) {
                                 ok = false
                             }
                         }
@@ -117,7 +119,7 @@ pub struct Note {
     pub id: usize,
     pub path: String,
     pub title: String,
-    pub labels: Vec<String>,
+    pub labels: HashSet<String>,
 }
 
 impl State {
