@@ -4,6 +4,8 @@ mod app;
 mod config;
 use app::App;
 
+use crate::app::Filter;
+
 #[derive(Debug, Parser)]
 struct Cli {
     #[command(subcommand)]
@@ -16,11 +18,22 @@ enum Commands {
     New {
         #[arg(help = "note title")]
         title: String,
-        #[arg(short = 'l', long = "label", help = "set label")]
+        #[arg(
+            short = 'l',
+            long = "label",
+            help = "attach label. you can attach multiple labels."
+        )]
         labels: Vec<String>,
     },
     #[command(about = "list notes")]
-    List,
+    List {
+        #[arg(
+            short = 'f',
+            long = "filter",
+            help = "filters. is:(label) or not:(label)"
+        )]
+        filters: Vec<String>,
+    },
     #[command(about = "edit note")]
     Edit {
         #[arg(help = "note id")]
@@ -39,8 +52,12 @@ fn main() {
                 .build();
             app.add_note(&input).unwrap();
         }
-        Commands::List => {
-            let notes = app.list_notes().unwrap();
+        Commands::List { filters } => {
+            let filters: Vec<Filter> = filters
+                .iter()
+                .map(|f| f.as_str().try_into().unwrap())
+                .collect();
+            let notes = app.list_notes(filters).unwrap();
             println!("archived   id: title");
             notes
                 .iter()

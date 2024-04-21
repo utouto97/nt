@@ -15,6 +15,26 @@ pub struct AddNoteInput<'a> {
     labels: Vec<&'a str>,
 }
 
+#[derive(Debug)]
+pub enum Filter<'a> {
+    Is(&'a str),
+    Not(&'a str),
+}
+
+impl<'a> TryFrom<&'a str> for Filter<'a> {
+    type Error = anyhow::Error;
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+        let trimmed = value.trim();
+        if trimmed.starts_with("is:") {
+            Ok(Filter::Is(&trimmed[3..].trim()))
+        } else if trimmed.starts_with("not:") {
+            Ok(Filter::Not(&trimmed[4..].trim()))
+        } else {
+            Err(anyhow!("filter parse error"))
+        }
+    }
+}
+
 impl App {
     pub fn new() -> anyhow::Result<Self> {
         let config = Config::load()?;
@@ -41,9 +61,31 @@ impl App {
         Ok(note)
     }
 
-    pub fn list_notes(&self) -> anyhow::Result<Vec<Note>> {
+    pub fn list_notes(&self, filters: Vec<Filter>) -> anyhow::Result<Vec<Note>> {
         let state = State::load(self.config.nt_dir().as_str());
-        Ok(state.notes)
+        let filtered: Vec<Note> = state
+            .notes
+            .into_iter()
+            .filter(|note| {
+                let mut ok = true;
+                for filter in filters.iter() {
+                    match filter {
+                        Filter::Is(label) => {
+                            if !note.labels.iter().any(|l| l.as_str() == *label) {
+                                ok = false
+                            }
+                        }
+                        Filter::Not(label) => {
+                            if !note.labels.iter().all(|l| l.as_str() != *label) {
+                                ok = false
+                            }
+                        }
+                    }
+                }
+                ok
+            })
+            .collect();
+        Ok(filtered)
     }
 
     pub fn edit_note(&self, id: usize) -> anyhow::Result<()> {
