@@ -1,10 +1,18 @@
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 use crate::config::Config;
 
 pub struct App {
     config: Config,
+}
+
+#[derive(Debug, TypedBuilder)]
+pub struct AddNoteInput<'a> {
+    title: &'a str,
+    #[builder(default = Vec::new())]
+    labels: Vec<&'a str>,
 }
 
 impl App {
@@ -13,14 +21,14 @@ impl App {
         Ok(Self { config })
     }
 
-    pub fn add_note(&self, title: &str) -> anyhow::Result<Note> {
+    pub fn add_note<'a>(&'a self, input: &AddNoteInput<'a>) -> anyhow::Result<Note> {
         let mut state = State::load(self.config.nt_dir().as_str());
         let id = state.next_id;
         let note = Note {
             id,
-            title: title.to_string(),
             path: format!("{}.md", id),
-            archived: false,
+            title: input.title.to_string(),
+            labels: input.labels.iter().map(|label| label.to_string()).collect(),
         };
         state.next_id += 1;
         state.notes.push(note.clone());
@@ -28,23 +36,14 @@ impl App {
         let filepath = std::path::Path::new(self.config.nt_dir().as_str())
             .join("notes")
             .join(&note.path);
-        std::fs::write(&filepath, title)?;
+        std::fs::write(&filepath, input.title)?;
         std::process::Command::new("nvim").arg(&filepath).status()?;
         Ok(note)
     }
 
-    pub fn list_notes(&self, archived: bool) -> anyhow::Result<Vec<Note>> {
+    pub fn list_notes(&self) -> anyhow::Result<Vec<Note>> {
         let state = State::load(self.config.nt_dir().as_str());
-        let notes = if archived {
-            state.notes
-        } else {
-            state
-                .notes
-                .into_iter()
-                .filter(|note| !note.archived)
-                .collect()
-        };
-        Ok(notes)
+        Ok(state.notes)
     }
 
     pub fn edit_note(&self, id: usize) -> anyhow::Result<()> {
@@ -58,18 +57,6 @@ impl App {
             .join("notes")
             .join(&note.path);
         std::process::Command::new("nvim").arg(filepath).status()?;
-        Ok(())
-    }
-
-    pub fn archive_note(&self, id: usize) -> anyhow::Result<()> {
-        let mut state = State::load(self.config.nt_dir().as_str());
-        state
-            .notes
-            .iter_mut()
-            .find(|note| note.id == id)
-            .map(|note| note.archived = true)
-            .ok_or(anyhow!("note not found"))?;
-        state.save(self.config.nt_dir().as_str())?;
         Ok(())
     }
 }
@@ -86,8 +73,7 @@ pub struct Note {
     pub id: usize,
     pub path: String,
     pub title: String,
-    #[serde(default)]
-    pub archived: bool,
+    pub labels: Vec<String>,
 }
 
 impl State {
