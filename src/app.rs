@@ -98,7 +98,9 @@ impl App {
         let filepath = std::path::Path::new(self.config.nt_dir().as_str())
             .join("notes")
             .join(&note.path);
-        std::process::Command::new("nvim").arg(filepath).status()?;
+        std::process::Command::new(self.config.editor())
+            .arg(filepath)
+            .status()?;
         Ok(())
     }
 }

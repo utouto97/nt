@@ -7,6 +7,7 @@ use shellexpand;
 pub struct Config {
     #[getter(skip)]
     nt_dir: String,
+    editor: String,
 }
 
 const NT_CONFIG: &str = "~/.nt.json";
@@ -39,6 +40,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             nt_dir: "~/nt".to_string(),
+            editor: "vim".to_string(),
         }
     }
 }
