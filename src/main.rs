@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 
 mod app;
 mod config;
@@ -39,6 +39,32 @@ enum Commands {
         #[arg(help = "note id")]
         id: usize,
     },
+    #[command(subcommand)]
+    Label(LabelCommands),
+}
+
+#[derive(Debug, Args)]
+struct LabelArgs {
+    #[command(subcommand)]
+    command: LabelCommands,
+}
+
+#[derive(Debug, Subcommand)]
+enum LabelCommands {
+    #[command(about = "add labels")]
+    Add {
+        #[arg(help = "note id")]
+        id: usize,
+        #[arg(help = "labels")]
+        labels: Vec<String>,
+    },
+    #[command(about = "remove labels")]
+    Rm {
+        #[arg(help = "note id")]
+        id: usize,
+        #[arg(help = "labels")]
+        labels: Vec<String>,
+    },
 }
 
 fn main() {
@@ -66,5 +92,13 @@ fn main() {
         Commands::Edit { id } => {
             app.edit_note(id).unwrap();
         }
+        Commands::Label(subcmd) => match subcmd {
+            LabelCommands::Add { id, labels } => app
+                .add_labels(id, labels.iter().map(|l| l.as_str()).collect())
+                .unwrap(),
+            LabelCommands::Rm { id, labels } => app
+                .remove_labels(id, labels.iter().map(|l| l.as_str()).collect())
+                .unwrap(),
+        },
     }
 }

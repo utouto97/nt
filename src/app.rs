@@ -105,6 +105,34 @@ impl App {
             .status()?;
         Ok(())
     }
+
+    pub fn add_labels<'a>(&'a self, id: usize, labels: Vec<&'a str>) -> anyhow::Result<()> {
+        let mut state = State::load(self.config.nt_dir().as_str());
+        let note = state
+            .notes
+            .iter_mut()
+            .find(|note| note.id == id)
+            .ok_or(anyhow!("note not found"))?;
+        for label in labels {
+            note.labels.insert(label.to_string());
+        }
+        state.save(self.config.nt_dir().as_str())?;
+        Ok(())
+    }
+
+    pub fn remove_labels<'a>(&'a self, id: usize, labels: Vec<&'a str>) -> anyhow::Result<()> {
+        let mut state = State::load(self.config.nt_dir().as_str());
+        let note = state
+            .notes
+            .iter_mut()
+            .find(|note| note.id == id)
+            .ok_or(anyhow!("note not found"))?;
+        for label in labels {
+            note.labels.remove(label);
+        }
+        state.save(self.config.nt_dir().as_str())?;
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
