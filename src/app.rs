@@ -134,7 +134,7 @@ impl App {
         Ok(())
     }
 
-    pub fn search_notes(&self, filters: Vec<Filter>) -> anyhow::Result<Vec<Note>> {
+    pub fn search_notes(&self, keyword: &str, filters: Vec<Filter>) -> anyhow::Result<Vec<Note>> {
         let state = State::load(self.config.nt_dir().as_str());
         let filtered: Vec<Note> = state
             .notes
@@ -155,11 +155,27 @@ impl App {
                         }
                     }
                 }
+
+                let filepath = std::path::Path::new(self.config.nt_dir().as_str())
+                    .join("notes")
+                    .join(&note.path);
+                if !(grep(filepath.to_str().unwrap_or(""), keyword).unwrap_or(false)) {
+                    ok = false
+                }
+
                 ok
             })
             .collect();
         Ok(filtered)
     }
+}
+
+fn grep(file_path: &str, keyword: &str) -> anyhow::Result<bool> {
+    if file_path.len() == 0 {
+        return Ok(false);
+    }
+    let contents = std::fs::read_to_string(file_path)?;
+    Ok(contents.contains(keyword))
 }
 
 #[derive(Debug, Serialize, Deserialize)]

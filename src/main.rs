@@ -43,6 +43,9 @@ enum Commands {
     Label(LabelCommands),
     #[command(about = "search notes")]
     Search {
+        #[arg(help = "search keyword")]
+        keyword: String,
+
         #[arg(
             short = 'f',
             long = "filter",
@@ -109,12 +112,12 @@ fn main() {
                 .remove_labels(id, labels.iter().map(|l| l.as_str()).collect())
                 .unwrap(),
         },
-        Commands::Search { filters } => {
+        Commands::Search { keyword, filters } => {
             let filters: Vec<Filter> = filters
                 .iter()
                 .map(|f| f.as_str().try_into().unwrap())
                 .collect();
-            let notes = app.search_notes(filters).unwrap();
+            let notes = app.search_notes(keyword.as_str(), filters).unwrap();
             println!("archived   id: title");
             notes
                 .iter()
