@@ -133,6 +133,33 @@ impl App {
         state.save(self.config.nt_dir().as_str())?;
         Ok(())
     }
+
+    pub fn search_notes(&self, filters: Vec<Filter>) -> anyhow::Result<Vec<Note>> {
+        let state = State::load(self.config.nt_dir().as_str());
+        let filtered: Vec<Note> = state
+            .notes
+            .into_iter()
+            .filter(|note| {
+                let mut ok = true;
+                for filter in filters.iter() {
+                    match filter {
+                        Filter::Is(label) => {
+                            if !note.labels.contains(*label) {
+                                ok = false
+                            }
+                        }
+                        Filter::Not(label) => {
+                            if note.labels.contains(*label) {
+                                ok = false
+                            }
+                        }
+                    }
+                }
+                ok
+            })
+            .collect();
+        Ok(filtered)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
