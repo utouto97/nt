@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
 mod app;
 mod config;
@@ -53,12 +53,8 @@ enum Commands {
         )]
         filters: Vec<String>,
     },
-}
-
-#[derive(Debug, Args)]
-struct LabelArgs {
     #[command(subcommand)]
-    command: LabelCommands,
+    Config(ConfigCommands),
 }
 
 #[derive(Debug, Subcommand)]
@@ -76,6 +72,15 @@ enum LabelCommands {
         id: usize,
         #[arg(help = "labels")]
         labels: Vec<String>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum ConfigCommands {
+    #[command(about = "get config")]
+    Get {
+        #[arg(help = "config key")]
+        key: String,
     },
 }
 
@@ -123,5 +128,12 @@ fn main() {
                 .iter()
                 .for_each(|note| println!("{:>8} {:4}: {}", "", note.id, note.title))
         }
+        Commands::Config(subcmd) => match subcmd {
+            ConfigCommands::Get { key } => {
+                if let Ok(value) = app.get_config(key.as_str()) {
+                    println!("{}: {}", key, value);
+                }
+            }
+        },
     }
 }

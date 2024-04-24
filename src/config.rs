@@ -34,6 +34,13 @@ impl Config {
         }?;
         Ok(config)
     }
+
+    pub fn get(&self, key: &str) -> Option<String> {
+        serde_json::to_value(self)
+            .unwrap()
+            .get(key)
+            .and_then(|v| Some(v.to_string()))
+    }
 }
 
 impl Default for Config {

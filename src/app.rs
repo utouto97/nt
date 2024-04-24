@@ -168,6 +168,10 @@ impl App {
             .collect();
         Ok(filtered)
     }
+
+    pub fn get_config(&self, key: &str) -> anyhow::Result<String> {
+        self.config.get(key).ok_or(anyhow!("error"))
+    }
 }
 
 fn grep(file_path: &str, keyword: &str) -> anyhow::Result<bool> {
