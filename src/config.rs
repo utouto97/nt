@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 use shellexpand;
@@ -35,11 +36,11 @@ impl Config {
         Ok(config)
     }
 
-    pub fn get(&self, key: &str) -> Option<String> {
-        serde_json::to_value(self)
-            .unwrap()
-            .get(key)
-            .and_then(|v| Some(v.to_string()))
+    pub fn get(&self, key: &str) -> anyhow::Result<String> {
+        let json = serde_json::to_value(self)?;
+        json.get(key)
+            .ok_or(anyhow!("key not found"))
+            .and_then(|v| Ok(v.to_string()))
     }
 }
 

@@ -170,7 +170,7 @@ impl App {
     }
 
     pub fn get_config(&self, key: &str) -> anyhow::Result<String> {
-        self.config.get(key).ok_or(anyhow!("error"))
+        self.config.get(key)
     }
 }
 
