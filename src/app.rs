@@ -71,13 +71,20 @@ impl App {
     }
 
     pub fn list_notes(&self, filters: Vec<Filter>) -> anyhow::Result<Vec<Note>> {
+        let mut default_filters: Vec<Filter> = self
+            .config
+            .default_filter()
+            .split(" ")
+            .map(|f| f.try_into().unwrap())
+            .collect();
+        default_filters.extend(filters);
         let state = State::load(self.config.nt_dir().as_str());
         let filtered: Vec<Note> = state
             .notes
             .into_iter()
             .filter(|note| {
                 let mut ok = true;
-                for filter in filters.iter() {
+                for filter in default_filters.iter() {
                     match filter {
                         Filter::Is(label) => {
                             if !note.labels.contains(*label) {
@@ -142,13 +149,20 @@ impl App {
     }
 
     pub fn search_notes(&self, keyword: &str, filters: Vec<Filter>) -> anyhow::Result<Vec<Note>> {
+        let mut default_filters: Vec<Filter> = self
+            .config
+            .default_filter()
+            .split(" ")
+            .map(|f| f.try_into().unwrap())
+            .collect();
+        default_filters.extend(filters);
         let state = State::load(self.config.nt_dir().as_str());
         let filtered: Vec<Note> = state
             .notes
             .into_iter()
             .filter(|note| {
                 let mut ok = true;
-                for filter in filters.iter() {
+                for filter in default_filters.iter() {
                     match filter {
                         Filter::Is(label) => {
                             if !note.labels.contains(*label) {

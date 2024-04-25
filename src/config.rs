@@ -11,6 +11,7 @@ pub struct Config {
     editor: String,
     #[getter(skip)]
     default_label: String,
+    default_filter: String,
 }
 
 const NT_CONFIG: &str = "~/.nt.json";
@@ -81,6 +82,7 @@ impl Default for Config {
             nt_dir: "~/nt".to_string(),
             editor: "vim".to_string(),
             default_label: "".to_string(),
+            default_filter: "not:archived".to_string(),
         }
     }
 }
