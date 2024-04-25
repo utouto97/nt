@@ -40,6 +40,10 @@ impl<'a> TryFrom<&'a str> for Filter<'a> {
 impl App {
     pub fn new() -> anyhow::Result<Self> {
         let config = Config::load()?;
+        let path = std::path::Path::new(config.nt_dir().as_str()).join("notes");
+        if !path.exists() {
+            std::fs::create_dir_all(path)?
+        }
         Ok(Self { config })
     }
 
