@@ -24,6 +24,7 @@ impl Config {
         self.default_label
             .split(" ")
             .map(|x| x.to_string())
+            .filter(|x| x.len() > 0)
             .collect()
     }
 
@@ -52,10 +53,19 @@ impl Config {
             .and_then(|v| Ok(v.to_string()))
     }
 
-    pub fn set(&self, key: &str, value: &str) -> anyhow::Result<()> {
+    pub fn set(&self, key: &str, value: Option<&str>) -> anyhow::Result<()> {
+        let value = match value {
+            Some(value) => serde_json::Value::from(value),
+            None => {
+                let default_json = serde_json::to_value(self)?;
+                let default_value = default_json.get(key).ok_or(anyhow!("key not found"))?;
+                default_value.clone()
+            }
+        };
+
         let mut json = serde_json::to_value(self)?;
         if json.get(key).is_some() {
-            json[key] = serde_json::Value::from(value);
+            json[key] = value;
             let config_path = format!("{}", shellexpand::tilde(NT_CONFIG));
             std::fs::write(&config_path, json.to_string())?;
             Ok(())

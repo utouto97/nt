@@ -180,7 +180,7 @@ impl App {
         self.config.get(key)
     }
 
-    pub fn set_config(&self, key: &str, value: &str) -> anyhow::Result<()> {
+    pub fn set_config(&self, key: &str, value: Option<&str>) -> anyhow::Result<()> {
         self.config.set(key, value)
     }
 }

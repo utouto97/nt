@@ -87,7 +87,7 @@ enum ConfigCommands {
         #[arg(help = "config key")]
         key: String,
         #[arg(help = "config value")]
-        value: String,
+        value: Option<String>,
     },
 }
 
@@ -141,9 +141,9 @@ fn main() {
                     println!("{}: {}", key, value);
                 }
             }
-            ConfigCommands::Set { key, value } => {
-                app.set_config(key.as_str(), value.as_str()).unwrap()
-            }
+            ConfigCommands::Set { key, value } => app
+                .set_config(key.as_str(), value.as_ref().map(|x| x.as_str()))
+                .unwrap(),
         },
     }
 }
