@@ -42,6 +42,18 @@ impl Config {
             .ok_or(anyhow!("key not found"))
             .and_then(|v| Ok(v.to_string()))
     }
+
+    pub fn set(&self, key: &str, value: &str) -> anyhow::Result<()> {
+        let mut json = serde_json::to_value(self)?;
+        if json.get(key).is_some() {
+            json[key] = serde_json::Value::from(value);
+            let config_path = format!("{}", shellexpand::tilde(NT_CONFIG));
+            std::fs::write(&config_path, json.to_string())?;
+            Ok(())
+        } else {
+            Err(anyhow!("key not found"))
+        }
+    }
 }
 
 impl Default for Config {

@@ -82,6 +82,13 @@ enum ConfigCommands {
         #[arg(help = "config key")]
         key: String,
     },
+    #[command(about = "set config")]
+    Set {
+        #[arg(help = "config key")]
+        key: String,
+        #[arg(help = "config value")]
+        value: String,
+    },
 }
 
 fn main() {
@@ -133,6 +140,9 @@ fn main() {
                 if let Ok(value) = app.get_config(key.as_str()) {
                     println!("{}: {}", key, value);
                 }
+            }
+            ConfigCommands::Set { key, value } => {
+                app.set_config(key.as_str(), value.as_str()).unwrap()
             }
         },
     }

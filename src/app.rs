@@ -172,6 +172,10 @@ impl App {
     pub fn get_config(&self, key: &str) -> anyhow::Result<String> {
         self.config.get(key)
     }
+
+    pub fn set_config(&self, key: &str, value: &str) -> anyhow::Result<()> {
+        self.config.set(key, value)
+    }
 }
 
 fn grep(file_path: &str, keyword: &str) -> anyhow::Result<bool> {
