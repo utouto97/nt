@@ -50,11 +50,14 @@ impl App {
     pub fn add_note<'a>(&'a self, input: &AddNoteInput<'a>) -> anyhow::Result<Note> {
         let mut state = State::load(self.config.nt_dir().as_str());
         let id = state.next_id;
+        let mut labels: HashSet<String> =
+            input.labels.iter().map(|label| label.to_string()).collect();
+        labels.extend(self.config.default_label().clone());
         let note = Note {
             id,
             path: format!("{}.md", id),
             title: input.title.to_string(),
-            labels: input.labels.iter().map(|label| label.to_string()).collect(),
+            labels,
         };
         state.next_id += 1;
         state.notes.push(note.clone());

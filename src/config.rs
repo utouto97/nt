@@ -9,6 +9,8 @@ pub struct Config {
     #[getter(skip)]
     nt_dir: String,
     editor: String,
+    #[getter(skip)]
+    default_label: String,
 }
 
 const NT_CONFIG: &str = "~/.nt.json";
@@ -16,6 +18,13 @@ const NT_CONFIG: &str = "~/.nt.json";
 impl Config {
     pub fn nt_dir(&self) -> String {
         format!("{}", shellexpand::tilde(self.nt_dir.as_str()))
+    }
+
+    pub fn default_label(&self) -> Vec<String> {
+        self.default_label
+            .split(" ")
+            .map(|x| x.to_string())
+            .collect()
     }
 
     pub fn load() -> anyhow::Result<Self> {
@@ -61,6 +70,7 @@ impl Default for Config {
         Self {
             nt_dir: "~/nt".to_string(),
             editor: "vim".to_string(),
+            default_label: "".to_string(),
         }
     }
 }
